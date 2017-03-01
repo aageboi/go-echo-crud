@@ -1,0 +1,9 @@
+<html>
+    <head>
+        <title>CRUD Using Echo</title>
+        <link rel="stylesheet" href="/static/css/main.css">
+    </head>
+    <body>
+        Hello, aageboi!!!!
+    </body>
+</html>
