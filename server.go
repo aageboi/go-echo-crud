@@ -1,11 +1,15 @@
 package main
 
 import (
+	"html/template"
 	"net/http"
 	"strconv"
+	"io"
 
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
+
+	mgo "gopkg.in/mgo.v2"
 )
 
 type user struct {
@@ -18,15 +22,23 @@ var (
 	seq = 1
 )
 
-/*
 type Template struct {
 	templates *template.Template
 }
-*/
+
+func (t *Template) Render(w io.Writer, name string, data interface{}, c echo.Context) error {
+	return t.templates.ExecuteTemplate(w, name, data)
+}
 
 func main() {
 	e := echo.New()
-	e.File("/", "public/index.html")
+	t := &Template{
+		templates: template.Must(template.ParseGlob("public/views/*.html")),
+	}
+	e.Renderer = t
+
+	// e.File("/", "public/index.html")
+	e.GET("/", index)
 
 	// Middleware
 	e.Use(middleware.Logger())
@@ -37,11 +49,18 @@ func main() {
 		return c.String(http.StatusOK, "Hello, aageboi!!")
 	})
 	*/
-	e.POST("/users", saveUser)
-	e.GET("/users",getUser)
-	e.GET("/user/:id", getUser)
-	e.PUT("/user/:id", updateUser)
-	e.DELETE("/user/:id", deleteUser)
+	user := e.Group("/users")
+	user.Use(middleware.BasicAuth(func(user, pass string, c echo.Context) bool {
+		if user == "root" && pass == "123" {
+			return true
+		}
+		return false
+	}))
+	user.POST("/", saveUser)
+	user.GET("/",getUser)
+	user.GET("/:id", getUser)
+	user.PUT("/:id", updateUser)
+	user.DELETE("/:id", deleteUser)
 	
 	e.GET("/show", show)
 
@@ -54,6 +73,10 @@ func main() {
 * Handlers
 *
 */
+func index(c echo.Context) error {
+	return c.Render(http.StatusOK, "hello", "aageboi")
+}
+
 func getUser(c echo.Context) error{
 	/*
 	// show parameter id
